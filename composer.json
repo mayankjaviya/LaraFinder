@@ -1,0 +1,17 @@
+{
+    "name": "mayankjaviya/lara-finder",
+    "description": "simplify the process of searching for records in a database",
+    "autoload": {
+        "psr-4": {
+            "mayankjaviya\\LaraFinder\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Mayank Javiya",
+            "email": "mynk3120@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
