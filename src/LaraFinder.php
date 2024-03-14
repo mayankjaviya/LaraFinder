@@ -20,11 +20,7 @@ class LaraFinder
 
         static::checkColumns($model, $columns);
 
-        $result = $model::where(function ($query) use ($columns, $value) {
-            foreach ($columns as $column) {
-                $query->orWhere($column, 'LIKE', '%' . $value . '%');
-            }
-        })->get();
+        $result = static::searchData($model, $value, $model, $columns)->get();
 
         return $result;
     }
@@ -34,12 +30,7 @@ class LaraFinder
         static::checkClass($model);
         $model = new $model;
 
-        $columns = $model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable());
-        $result = $model::where(function ($query) use ($columns, $value) {
-            foreach ($columns as $column) {
-                $query->orWhere($column, 'LIKE', '%' . $value . '%');
-            }
-        })->get();
+        $result = static::searchData($model, $value)->get();
 
         return $result;
     }
@@ -54,11 +45,7 @@ class LaraFinder
 
         $columns = $model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable());
         $columns = array_diff($columns, Arr::wrap($except));
-        $result = $model::where(function ($query) use ($columns, $value) {
-            foreach ($columns as $column) {
-                $query->orWhere($column, 'LIKE', '%' . $value . '%');
-            }
-        })->get();
+        $result = static::searchData($model, $value, $model, $columns)->get();
 
         return $result;
     }
@@ -102,5 +89,46 @@ class LaraFinder
         if (!class_exists($model)) {
             throw new \Exception('Model does not exist');
         }
+    }
+
+    public static function searchInMultipleModel($models, $value)
+    {
+        $result = [];
+        foreach ($models as $model) {
+            $result[class_basename($model)] = static::searchAll($model, $value);
+        }
+        return $result;
+    }
+
+    public static function searchWithRelation($model, $value, $relation)
+    {
+        static::checkClass($model);
+        static::checkClass($relation);
+
+        $model = new $model;
+        $relation = new $relation;
+
+        $result = $model::whereHas(class_basename($relation), function ($query) use ($relation, $value) {
+            return static::searchData($relation, $value, $query);
+        })->orWhere(function ($query) use ($model, $value) {
+            return static::searchData($model, $value, $query);
+        })->with(class_basename($relation))->get();
+
+        return $result;
+    }
+
+    private static function searchData($model, $value, $query = null, $columns = [])
+    {
+        if (empty($columns)) {
+            $columns = $model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable());
+        }
+
+        $query = $query ?: $model;
+
+        return $query->where(function ($query) use ($columns, $value) {
+            foreach ($columns as $column) {
+                $query->orWhere($column, 'LIKE', '%' . $value . '%');
+            }
+        });
     }
 }

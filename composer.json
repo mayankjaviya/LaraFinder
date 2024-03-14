@@ -13,5 +13,8 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+        "illuminate/collections": "^12.0@dev",
+        "illuminate/support": "^12.0@dev"
+    }
 }
